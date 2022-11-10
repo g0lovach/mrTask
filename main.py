@@ -4,17 +4,8 @@ from sys import getsizeof
 from re import findall
 from datetime import datetime as dt
 
-# Создание директорий. Структуру рабочего пространства я решил несколько видоизменить, поскольку, если оставить ее такой
-# какой она была описана в условии задачи, то у пользователя возникнет проблема навигации по рабочему пространству.
-# Поэтому, я решил создать внутри дирекории tasks еще две директории: Old и Actual. В первой под каждую уникальную дату
-# формата yyyy-mm-dd создается папка, в которой хранятся архивированные отчеты. В директории tasks/Actual хранятся
-# актуальные отчеты. С одной стороны, неизвестно каким образом в дальнейшем будут использоваться отчеты
-# (может быть в других скриптах, где важно соблюдение изначальной структуры) и на сколько критично изменение структуры,
-# однако реализованная задача позволяет немного упростить навигацию по рабочей директории для конечного пользователя
-# (у нас есть выделенная директория под актуальные отчеты и неактуальные распределены по датам).
+# Создание директории.
 os.mkdir("tasks") if not os.path.isdir("tasks") else ...
-os.mkdir("tasks/Actual") if not os.path.isdir("tasks/Actual") else ...
-os.mkdir("tasks/Old") if not os.path.isdir("tasks/Old") else ...
 
 # Загрузка данных в оперативную память
 proxies = {'http': ''}
@@ -43,9 +34,9 @@ for user in users:
                     tasksNotDone += '- ' + todo.get("title")[:46] + '…\n'
 
     # Проверка на необходимость архивирования нынешнего отчета по пользователю
-    if os.path.isfile('tasks/Actual/' + user.get('username') + '.txt'):
+    if os.path.isfile('tasks/' + user.get('username') + '.txt'):
         try:
-            with open('tasks/Actual/' + user.get('username') + '.txt') as old_file:
+            with open('tasks/' + user.get('username') + '.txt') as old_file:
                 old_time = findall(r'\d\d.\d\d.\d\d\d\d \d\d:\d\d', old_file.readlines()[1])[0]
         except OSError:
             print("Непредвиденная ошибка при чтении старого отчета!")
@@ -66,16 +57,15 @@ for user in users:
         # Трансформирование формата времени из файла отчета в формат названия архивируемых отчетов
         t_time = ('-'.join(old_time.split()[0].split('.')[::-1]) + 'T' + old_time.split()[1])
 
-        # Создание директории под архивируемые отчеты согласно прочитанной дате.
-        os.mkdir(f"tasks/Old/{t_time[:10]}") if not os.path.isdir(f"tasks/Old/{t_time[:10]}") else ...
+
 
         # Блок проверки длины названия архивируемого файла. Возможна ситация, когда актуальный отчет был создан
         # для пользователя, у которого username достаточно длинный, что при добавлении префикса old и даты к никнейму,
         # общая длина имени файла превысит 255 байт, что не позволено системой.
         if not os.path.isfile(old_file_path := f'tasks/Old/{t_time[:10]}/Old_{user.get("username")}_{t_time}.txt'):
             if getsizeof(old_file_path) <= 255:
-                os.rename(f'tasks/Actual/{user.get("username")}.txt',
-                          f'tasks/Old/{t_time[:10]}/Old_{user.get("username")}_{t_time}.txt')
+                os.rename(f'tasks/{user.get("username")}.txt',
+                          f'tasks/Old_{user.get("username")}_{t_time}.txt')
             else:
                 print(f'Не удалось архивировать устаревший отчет для {user.get("username")},'
                       f' поскольку название устаревшего отчета слишком велико!'
@@ -95,7 +85,7 @@ for user in users:
 
     # Попытка записи
     try:
-        with open("tasks/Actual/" + user.get('username') + '.txt', 'w') as actual_file:
+        with open(f'tasks/{user.get("username")}.txt', 'w') as actual_file:
             actual_file.write(actual_file_content)
     except OSError:
         print('Непредвиденная ошибка записи актуального отчета!')
