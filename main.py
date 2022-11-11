@@ -62,7 +62,7 @@ for user in users:
         # Блок проверки длины названия архивируемого файла. Возможна ситация, когда актуальный отчет был создан
         # для пользователя, у которого username достаточно длинный, что при добавлении префикса old и даты к никнейму,
         # общая длина имени файла превысит 255 байт, что не позволено системой.
-        if not os.path.isfile(old_file_path := f'tasks/Old/{t_time[:10]}/Old_{user.get("username")}_{t_time}.txt'):
+        if not os.path.isfile(old_file_path := f'tasks/Old_{user.get("username")}_{t_time}.txt'):
             if getsizeof(old_file_path) <= 255:
                 os.rename(f'tasks/{user.get("username")}.txt',
                           f'tasks/Old_{user.get("username")}_{t_time}.txt')
